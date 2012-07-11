@@ -46,11 +46,12 @@ def windows_event_handler(dir_watch,cond,tasks):
                                                     None
                                                     )
         if results:
-            taskbuffer = set()
             for action, filename in results:
                 print filename, ACTIONS.get (action, "Unknown")
             for action, filename in results:
                 if action in [1,3,5] and fnmatch.fnmatch(filename, dir_watch['filemask']):
+                    if dir_watch['rec'] and os.sep in filename:
+                        continue
                     #~ full_filename = os.path.join (path_to_watch, file)
                     cond.acquire()
                     tasks.add(dir_watch['route'])
@@ -107,13 +108,13 @@ def start():
                 last_time = time.time()
                 print 'no active receiving.'
             else:     #active receiving events
-                print 'active receiving.'
                 current_time = time.time()
+                print 'active receiving.'
                 if current_time - last_time >= TIMEOUT:  #passed the waiting threshold
                     try:
                         for task in tasks:
                             job2queue.send_job_to_jobqueue([sys.executable,botsenginepath,task])
-                        print 'send to queue:',[sys.executable,botsenginepath,task]
+                        print 'send to queue:',task
                     except Exception, msg:
                         print 'Error in running task: "%s".'%msg
                     tasks.clear()
